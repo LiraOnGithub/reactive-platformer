@@ -58,7 +58,7 @@ inAir :: Player -> Bool
 inAir player = player.y < groundPosition
 
 updatePlayer :: PressedKeys -> (Player -> Player)
-updatePlayer k = setSprite . updateSprite . handleGrounded . applyFriction . setPosition . applyAcceleration . applyGravity . handleJump
+updatePlayer k = updateSprite . handleGrounded . applyFriction . setPosition . applyAcceleration . applyGravity . handleJump
 	where 
 		setPosition :: Player -> Player
 		setPosition player = player
@@ -104,10 +104,10 @@ updatePlayer k = setSprite . updateSprite . handleGrounded . applyFriction . set
 			| otherwise = player { groundState = Grounded, verticalVelocity = 0 }
 
 updateSprite :: Player -> Player
-updateSprite player = player { spriteInformation = setSpriteIndex . setPreviousSprite $ player.spriteInformation }
+updateSprite player = player { spriteInformation = setSpriteIndex . (setSpriteAction player) . setPreviousSprite $ player.spriteInformation }
 
-setSprite :: Player -> Player
-setSprite player = player { spriteInformation = player.spriteInformation { spriteAction = getSpriteAction player } }
+setSpriteAction :: Player -> SpriteInformation -> SpriteInformation
+setSpriteAction player spriteInformation = spriteInformation { spriteAction = getSpriteAction player }
 
 getSpriteAction :: Player -> SpriteAction
 getSpriteAction player
@@ -116,6 +116,3 @@ getSpriteAction player
 	| player.horizontalVelocity > 0.4 = SpriteActionWalkRight
 	| player.horizontalVelocity < -0.4 = SpriteActionWalkLeft
 	| otherwise = SpriteActionIdle
-
-getNextSpriteIndex :: Sprite -> SpriteAction -> Int -> Int
-getNextSpriteIndex sprite spriteAction spriteIndex = (spriteIndex + 1) `mod` frameCount sprite spriteAction
