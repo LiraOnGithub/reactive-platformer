@@ -1,14 +1,18 @@
 module EventNetwork (run) where
 
+import Control.Concurrent
+
 import qualified Reactive.Banana as B
 import qualified Reactive.Banana.Frameworks as F
 
 import Player
 import Event
 
-fps, delta :: Double
+fps, delta, maxFps, maxDelta :: Double
 fps = 30
 delta = 1000 / fps
+maxFps = 60
+maxDelta = 1000 / maxFps
 
 run :: IO [Event] -> IO Double -> (Player -> IO ()) -> IO ()
 run getEvents ticks drawPlayer = do
@@ -33,7 +37,9 @@ run getEvents ticks drawPlayer = do
 			| now - previousTick > delta = do
 				fireEvent $ TickEvent $ (now - previousTick) / delta
 				handleEvents fireEvent now nextEvents
-			| otherwise = handleEvents fireEvent previousTick nextEvents
+			| otherwise = do
+				threadDelay (round maxDelta * 1000)
+				handleEvents fireEvent previousTick nextEvents
 
 description :: F.AddHandler Event -> IO Double -> (Player -> IO ()) -> F.MomentIO ()
 description eventHandler ticks drawPlayer = do
