@@ -1,7 +1,9 @@
 module Player where
 
 import Data.Bool (bool)
+
 import Event
+import Sprite
 
 data GroundState
 	= Airborne
@@ -20,6 +22,10 @@ data Player = Player
 	, jumpPower :: Double
 	, gravity :: Double
 	, groundState :: GroundState
+
+	, sprite :: Sprite
+	, spriteAction :: SpriteAction
+	, spriteIndex :: Int
 	} deriving Show
 
 initialPlayer :: Player
@@ -35,6 +41,10 @@ initialPlayer = Player
 	, jumpPower = 12
 	, gravity = 1
 	, groundState = Airborne
+
+	, sprite = PlayerSprite
+	, spriteAction = SpriteActionIdle
+	, spriteIndex = 0
 	}
 
 groundPosition :: Double

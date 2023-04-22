@@ -38,8 +38,11 @@ run getEvents ticks drawPlayer = do
 				fireEvent $ TickEvent $ (now - previousTick) / delta
 				handleEvents fireEvent now nextEvents
 			| otherwise = do
-				threadDelay (round maxDelta * 1000)
+				preventCpu100
 				handleEvents fireEvent previousTick nextEvents
+
+preventCpu100 :: IO ()
+preventCpu100 = threadDelay (round maxDelta * 1000)
 
 description :: F.AddHandler Event -> IO Double -> (Player -> IO ()) -> F.MomentIO ()
 description eventHandler ticks drawPlayer = do
