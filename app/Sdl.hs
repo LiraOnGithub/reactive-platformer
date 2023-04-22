@@ -45,18 +45,18 @@ clear renderer = do
 
 drawPlayer :: SDL.Renderer -> Map Sprite SDL.Texture -> Player -> IO ()
 drawPlayer renderer sprites player =
-	drawSprite renderer playerSprite player.spriteAction player.spriteIndex (V2 player.x player.y) (V2 player.width player.height)
+	drawSprite renderer playerSprite player.spriteInformation.spriteAction player.spriteInformation.spriteIndex (V2 player.x player.y) (V2 player.spriteInformation.width player.spriteInformation.height)
 	where
 		playerSprite :: SDL.Texture
-		playerSprite = sprites ! player.sprite
+		playerSprite = sprites ! player.spriteInformation.sprite
 
-drawSprite :: SDL.Renderer -> SDL.Texture -> SpriteAction -> Int-> V2 Double -> V2 Double -> IO ()
+drawSprite :: SDL.Renderer -> SDL.Texture -> SpriteAction -> Int-> V2 Double -> V2 Int -> IO ()
 drawSprite renderer texture action index position size@(V2 width height) = SDL.copy renderer texture sourceRectangle targetRectangle
 	where
 		sourceRectangle :: Integral n => Maybe (SDL.Rectangle n)
-		sourceRectangle = toRectangle (V2 (index * round width) (fromEnum action * round height)) (V2 (round width) (round height))
+		sourceRectangle = toRectangle (V2 (index * width) (fromEnum action * height)) (V2 width height)
 		targetRectangle :: Integral n => Maybe (SDL.Rectangle n)
-		targetRectangle = toRectangle (round <$> position) (round <$> size)
+		targetRectangle = toRectangle (round <$> position) size
 
 
 drawRectangle :: SDL.Renderer -> V2 Int -> V2 Int -> IO ()

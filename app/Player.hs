@@ -14,8 +14,6 @@ data GroundState
 data Player = Player
 	{ x :: Double
 	, y :: Double
-	, width :: Double
-	, height :: Double
 	, acceleration :: Double
 	, friction :: Double
 	, horizontalVelocity :: Double
@@ -26,18 +24,13 @@ data Player = Player
 	, gravity :: Double
 	, groundState :: GroundState
 
-	, sprite :: Sprite
-	, previousSpriteAction :: SpriteAction
-	, spriteAction :: SpriteAction
-	, spriteIndex :: Int
+	, spriteInformation :: SpriteInformation
 	} deriving Show
 
 initialPlayer :: Player
 initialPlayer = Player
 	{ x = 20
 	, y = 20
-	, width = 20
-	, height = 20
 	, acceleration = 1
 	, friction = 2
 	, horizontalVelocity = 0
@@ -48,10 +41,14 @@ initialPlayer = Player
 	, gravity = 1
 	, groundState = Airborne
 
-	, sprite = PlayerSprite
-	, previousSpriteAction = SpriteActionIdle
-	, spriteAction = SpriteActionIdle
-	, spriteIndex = 0
+	, spriteInformation = SpriteInformation
+		{ sprite = PlayerSprite
+		, previousSpriteAction = SpriteActionIdle
+		, spriteAction = SpriteActionIdle
+		, spriteIndex = 0
+		, width = 20
+		, height = 20
+		}
 	}
 
 groundPosition :: Double
@@ -61,7 +58,7 @@ inAir :: Player -> Bool
 inAir player = player.y < groundPosition
 
 updatePlayer :: PressedKeys -> (Player -> Player)
-updatePlayer k = setSpriteIndex . setSprite . setPreviousSprite . handleGrounded . applyFriction . setPosition . applyAcceleration . applyGravity . handleJump
+updatePlayer k = setSprite . updateSprite . handleGrounded . applyFriction . setPosition . applyAcceleration . applyGravity . handleJump
 	where 
 		setPosition :: Player -> Player
 		setPosition player = player
@@ -106,18 +103,19 @@ updatePlayer k = setSpriteIndex . setSprite . setPreviousSprite . handleGrounded
 			| inAir player = player { groundState = Airborne }
 			| otherwise = player { groundState = Grounded, verticalVelocity = 0 }
 
-setPreviousSprite :: Player -> Player
-setPreviousSprite player = player { previousSpriteAction = player.spriteAction }
+updateSprite :: Player -> Player
+updateSprite player = player { spriteInformation = setSpriteIndex . setPreviousSprite $ player.spriteInformation }
 
 setSprite :: Player -> Player
-setSprite player
-	| player.groundState == Airborne && player.verticalVelocity < 0 = player { spriteAction = SpriteActionJump }
-	| player.groundState == Airborne && player.verticalVelocity > 0 = player { spriteAction = SpriteActionFall }
-	| player.horizontalVelocity > 0.4 = player { spriteAction = SpriteActionWalkRight }
-	| player.horizontalVelocity < -0.4 = player { spriteAction = SpriteActionWalkLeft }
-	| otherwise = player { spriteAction = SpriteActionIdle }
+setSprite player = player { spriteInformation = player.spriteInformation { spriteAction = getSpriteAction player } }
 
-setSpriteIndex :: Player -> Player
-setSpriteIndex player
-	| player.previousSpriteAction /= player.spriteAction = player { spriteIndex = 0 }
-	| otherwise = player { spriteIndex = (player.spriteIndex + 1) `mod` frameCount player.sprite player.spriteAction }
+getSpriteAction :: Player -> SpriteAction
+getSpriteAction player
+	| player.groundState == Airborne && player.verticalVelocity < 0 = SpriteActionJump
+	| player.groundState == Airborne && player.verticalVelocity > 0 = SpriteActionFall
+	| player.horizontalVelocity > 0.4 = SpriteActionWalkRight
+	| player.horizontalVelocity < -0.4 = SpriteActionWalkLeft
+	| otherwise = SpriteActionIdle
+
+getNextSpriteIndex :: Sprite -> SpriteAction -> Int -> Int
+getNextSpriteIndex sprite spriteAction spriteIndex = (spriteIndex + 1) `mod` frameCount sprite spriteAction
