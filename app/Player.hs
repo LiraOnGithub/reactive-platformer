@@ -54,7 +54,7 @@ inAir :: Player -> Bool
 inAir player = player.y < groundPosition
 
 updatePlayer :: PressedKeys -> (Player -> Player)
-updatePlayer k = handleGrounded . setPosition . applyGravity . handleJump
+updatePlayer k = setSprite . handleGrounded . setPosition . applyGravity . handleJump
 	where 
 		setPosition :: Player -> Player
 		setPosition player = player 
@@ -83,3 +83,9 @@ updatePlayer k = handleGrounded . setPosition . applyGravity . handleJump
 		handleGrounded player
 			| inAir player = player { groundState = Airborne }
 			| otherwise = player { groundState = Grounded, verticalVelocity = 0 }
+		setSprite :: Player -> Player
+		setSprite player
+			| player.groundState == Airborne = player
+				{ spriteAction = bool SpriteActionFall SpriteActionJump (player.verticalVelocity < 0)
+				}
+			| otherwise = player { spriteAction = SpriteActionIdle }
