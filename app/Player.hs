@@ -1,6 +1,7 @@
 module Player where
 
 import Data.Bool (bool)
+import Data.Ord (clamp)
 
 import Event
 import Sprite
@@ -15,7 +16,9 @@ data Player = Player
 	, y :: Double
 	, width :: Double
 	, height :: Double
-
+	, acceleration :: Double
+	, friction :: Double
+	, horizontalVelocity :: Double
 	, speed :: Double
 
 	, verticalVelocity :: Double
@@ -34,7 +37,9 @@ initialPlayer = Player
 	, y = 20
 	, width = 20
 	, height = 20
-
+	, acceleration = 1
+	, friction = 2
+	, horizontalVelocity = 0
 	, speed = 4
 
 	, verticalVelocity = 0
@@ -54,11 +59,11 @@ inAir :: Player -> Bool
 inAir player = player.y < groundPosition
 
 updatePlayer :: PressedKeys -> (Player -> Player)
-updatePlayer k = setSprite . handleGrounded . setPosition . applyGravity . handleJump
+updatePlayer k = setSprite . handleGrounded . applyFriction . setPosition . applyAcceleration . applyGravity . handleJump
 	where 
 		setPosition :: Player -> Player
-		setPosition player = player 
-			{ x = player.x - changeLeft + changeRight
+		setPosition player = player
+			{ x = player.x + player.horizontalVelocity * k.deltaLastTick
 			, y = min groundPosition (player.y + player.verticalVelocity * k.deltaLastTick)
 			}
 			where
@@ -79,6 +84,21 @@ updatePlayer k = setSprite . handleGrounded . setPosition . applyGravity . handl
 		applyGravity player = player 
 			{ verticalVelocity = player.verticalVelocity + player.gravity * k.deltaLastTick
 			}
+		applyAcceleration :: Player -> Player
+		applyAcceleration player = player
+			{ horizontalVelocity = clamp (-player.speed, player.speed) $ player.horizontalVelocity - accelerationLeft + accelerationRight
+			}
+			where
+				accelerationLeft :: Double
+				accelerationLeft = getAccelerationInDirection k.left * k.deltaLastTick
+				accelerationRight :: Double
+				accelerationRight = getAccelerationInDirection k.right * k.deltaLastTick
+				getAccelerationInDirection :: Bool -> Double
+				getAccelerationInDirection = bool 0 player.acceleration
+		applyFriction :: Player -> Player
+		applyFriction player = player
+			{ horizontalVelocity = player.horizontalVelocity / player.friction
+			}
 		handleGrounded :: Player -> Player
 		handleGrounded player
 			| inAir player = player { groundState = Airborne }
@@ -88,4 +108,6 @@ updatePlayer k = setSprite . handleGrounded . setPosition . applyGravity . handl
 			| player.groundState == Airborne = player
 				{ spriteAction = bool SpriteActionFall SpriteActionJump (player.verticalVelocity < 0)
 				}
+			| player.horizontalVelocity > 0.4 = player { spriteAction = SpriteActionWalkRight }
+			| player.horizontalVelocity < -0.4 = player { spriteAction = SpriteActionWalkLeft }
 			| otherwise = player { spriteAction = SpriteActionIdle }
