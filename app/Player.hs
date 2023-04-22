@@ -27,6 +27,7 @@ data Player = Player
 	, groundState :: GroundState
 
 	, sprite :: Sprite
+	, previousSpriteAction :: SpriteAction
 	, spriteAction :: SpriteAction
 	, spriteIndex :: Int
 	} deriving Show
@@ -48,6 +49,7 @@ initialPlayer = Player
 	, groundState = Airborne
 
 	, sprite = PlayerSprite
+	, previousSpriteAction = SpriteActionIdle
 	, spriteAction = SpriteActionIdle
 	, spriteIndex = 0
 	}
@@ -59,7 +61,7 @@ inAir :: Player -> Bool
 inAir player = player.y < groundPosition
 
 updatePlayer :: PressedKeys -> (Player -> Player)
-updatePlayer k = setSprite . handleGrounded . applyFriction . setPosition . applyAcceleration . applyGravity . handleJump
+updatePlayer k = setSpriteIndex . setSprite . setPreviousSprite . handleGrounded . applyFriction . setPosition . applyAcceleration . applyGravity . handleJump
 	where 
 		setPosition :: Player -> Player
 		setPosition player = player
@@ -103,11 +105,19 @@ updatePlayer k = setSprite . handleGrounded . applyFriction . setPosition . appl
 		handleGrounded player
 			| inAir player = player { groundState = Airborne }
 			| otherwise = player { groundState = Grounded, verticalVelocity = 0 }
-		setSprite :: Player -> Player
-		setSprite player
-			| player.groundState == Airborne = player
-				{ spriteAction = bool SpriteActionFall SpriteActionJump (player.verticalVelocity < 0)
-				}
-			| player.horizontalVelocity > 0.4 = player { spriteAction = SpriteActionWalkRight }
-			| player.horizontalVelocity < -0.4 = player { spriteAction = SpriteActionWalkLeft }
-			| otherwise = player { spriteAction = SpriteActionIdle }
+
+setPreviousSprite :: Player -> Player
+setPreviousSprite player = player { previousSpriteAction = player.spriteAction }
+
+setSprite :: Player -> Player
+setSprite player
+	| player.groundState == Airborne && player.verticalVelocity < 0 = player { spriteAction = SpriteActionJump }
+	| player.groundState == Airborne && player.verticalVelocity > 0 = player { spriteAction = SpriteActionFall }
+	| player.horizontalVelocity > 0.4 = player { spriteAction = SpriteActionWalkRight }
+	| player.horizontalVelocity < -0.4 = player { spriteAction = SpriteActionWalkLeft }
+	| otherwise = player { spriteAction = SpriteActionIdle }
+
+setSpriteIndex :: Player -> Player
+setSpriteIndex player
+	| player.previousSpriteAction /= player.spriteAction = player { spriteIndex = 0 }
+	| otherwise = player { spriteIndex = (player.spriteIndex + 1) `mod` frameCount player.sprite player.spriteAction }
