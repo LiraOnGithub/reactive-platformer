@@ -5,7 +5,7 @@ author: Lira Kraamwinkel
 
 executable reactive-platformer
     main-is: Main.hs
-    other-modules: Sdl, Player, EventNetwork, Event, Sprite
+    other-modules: Sdl, Player, EventNetwork, Event, Sprite, Brick, Level, Vector
     build-depends:
         base ^>=4.16.4.0
         ,sdl2 ==2.5.4.0
@@ -16,5 +16,5 @@ executable reactive-platformer
         ,containers ==0.6.5.1
     hs-source-dirs: app
     default-language: Haskell2010
-    default-extensions: OverloadedStrings, OverloadedRecordDot
+    default-extensions: OverloadedStrings, OverloadedRecordDot, NamedFieldPuns
     ghc-options: -Wno-tabs

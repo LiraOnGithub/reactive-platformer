@@ -5,6 +5,7 @@ import Data.Ord (clamp)
 
 import Event
 import Sprite
+import Vector
 
 data GroundState
 	= Airborne
@@ -12,8 +13,7 @@ data GroundState
 	deriving (Show, Eq)
 
 data Player = Player
-	{ x :: Double
-	, y :: Double
+	{ position :: Vec2 Double
 	, acceleration :: Double
 	, friction :: Double
 	, horizontalVelocity :: Double
@@ -27,10 +27,12 @@ data Player = Player
 	, spriteInformation :: SpriteInformation
 	} deriving Show
 
+instance HasSprite Player where
+	getSpriteToDraw player = (round <$> player.position, player.spriteInformation)
+
 initialPlayer :: Player
 initialPlayer = Player
-	{ x = 20
-	, y = 20
+	{ position = Vec2 20 20
 	, acceleration = 1
 	, friction = 2
 	, horizontalVelocity = 0
@@ -43,11 +45,12 @@ initialPlayer = Player
 
 	, spriteInformation = SpriteInformation
 		{ sprite = PlayerSprite
-		, previousSpriteAction = SpriteActionIdle
-		, spriteAction = SpriteActionIdle
-		, spriteIndex = 0
+		, previousAction = SpriteActionIdle
+		, action = SpriteActionIdle
+		, index = 0
 		, width = 20
 		, height = 20
+		, repeats = False
 		}
 	}
 
@@ -55,16 +58,16 @@ groundPosition :: Double
 groundPosition = 150
 
 inAir :: Player -> Bool
-inAir player = player.y < groundPosition
+inAir player = player.position.y < groundPosition
 
 updatePlayer :: PressedKeys -> (Player -> Player)
 updatePlayer k = updateSprite . handleGrounded . applyFriction . setPosition . applyAcceleration . applyGravity . handleJump
 	where 
 		setPosition :: Player -> Player
-		setPosition player = player
-			{ x = player.x + player.horizontalVelocity * k.deltaLastTick
-			, y = min groundPosition (player.y + player.verticalVelocity * k.deltaLastTick)
-			}
+		setPosition player = player { position = Vec2
+			{ x = player.position.x + player.horizontalVelocity * k.deltaLastTick
+			, y = min groundPosition (player.position.y + player.verticalVelocity * k.deltaLastTick)
+			} }
 			where
 				changeLeft :: Double
 				changeLeft = getSpeedInDirection k.left * k.deltaLastTick
@@ -107,7 +110,7 @@ updateSprite :: Player -> Player
 updateSprite player = player { spriteInformation = setSpriteIndex . (setSpriteAction player) . setPreviousSprite $ player.spriteInformation }
 
 setSpriteAction :: Player -> SpriteInformation -> SpriteInformation
-setSpriteAction player spriteInformation = spriteInformation { spriteAction = getSpriteAction player }
+setSpriteAction player spriteInformation = spriteInformation { action = getSpriteAction player }
 
 getSpriteAction :: Player -> SpriteAction
 getSpriteAction player

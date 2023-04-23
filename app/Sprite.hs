@@ -1,7 +1,10 @@
 module Sprite where
 
+import Vector
+
 data Sprite
 	= PlayerSprite
+	| BrickSprite
 	deriving (Show, Eq, Ord)
 
 data SpriteAction
@@ -14,25 +17,29 @@ data SpriteAction
 
 data SpriteInformation = SpriteInformation
 	{ sprite :: Sprite
-	, previousSpriteAction :: SpriteAction
-	, spriteAction :: SpriteAction
-	, spriteIndex :: Int
+	, previousAction :: SpriteAction
+	, action :: SpriteAction
+	, index :: Int
+	, repeats :: Bool
 	, height :: Int
 	, width :: Int
 	}
 	deriving Show
 
 frameCount :: Sprite -> SpriteAction -> Int
-frameCount PlayerSprite SpriteActionIdle = 1
-frameCount PlayerSprite SpriteActionJump = 1
-frameCount PlayerSprite SpriteActionFall = 1
 frameCount PlayerSprite SpriteActionWalkLeft = 4
 frameCount PlayerSprite SpriteActionWalkRight = 4
+frameCount BrickSprite SpriteActionIdle = 4
+frameCount _ _ = 1
 
 setPreviousSprite :: SpriteInformation -> SpriteInformation
-setPreviousSprite player = player { previousSpriteAction = player.spriteAction }
+setPreviousSprite info = info { previousAction = info.action }
 
 setSpriteIndex :: SpriteInformation -> SpriteInformation
-setSpriteIndex player
-	| player.previousSpriteAction /= player.spriteAction = player { spriteIndex = 0 }
-	| otherwise = player { spriteIndex = (player.spriteIndex + 1) `mod` frameCount player.sprite player.spriteAction } 
+setSpriteIndex info
+	| info.previousAction /= info.action = info { index = 0 }
+	| info.repeats = info { index = (info.index + 1) `mod` frameCount info.sprite info.action } 
+	| otherwise = info { index = min (info.index + 1) (frameCount info.sprite info.action - 1) }
+
+class HasSprite a where
+	getSpriteToDraw :: a -> (Vec2 Int, SpriteInformation)

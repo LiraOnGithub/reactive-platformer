@@ -14,6 +14,7 @@ import Control.Exception (bracket, bracket_)
 import Sprite
 import Player
 import Event
+import Vector
 
 withSdl :: (IO [Event] -> IO Double -> (Player -> IO ()) -> IO ()) -> IO ()
 withSdl eventNetwork = bracket_
@@ -29,13 +30,14 @@ withSprites f renderer = bracket
 	where
 		loadSprites :: IO (Map Sprite SDL.Texture)
 		loadSprites = do
-			player <- SDL.Image.loadTexture renderer "app/images/player_sprite.png"
-			pure $ fromList [(PlayerSprite, player)]
+			playerTexture <- SDL.Image.loadTexture renderer "app/images/player_sprite.png"
+			brickTexture <- SDL.Image.loadTexture renderer "app/images/brick_sprite.png"
+			pure $ fromList [(PlayerSprite, playerTexture)]
 
 draw :: SDL.Renderer -> Map Sprite SDL.Texture -> Player -> IO ()
 draw renderer sprites player = do
 	clear renderer
-	drawPlayer renderer sprites player
+	drawSpriteInfo renderer sprites player.spriteInformation player.position.x player.position.y
 	SDL.present renderer
 
 clear :: SDL.Renderer -> IO ()
@@ -43,12 +45,12 @@ clear renderer = do
 	SDL.rendererDrawColor renderer $= V4 0 0 0 255
 	SDL.clear renderer
 
-drawPlayer :: SDL.Renderer -> Map Sprite SDL.Texture -> Player -> IO ()
-drawPlayer renderer sprites player =
-	drawSprite renderer playerSprite player.spriteInformation.spriteAction player.spriteInformation.spriteIndex (V2 player.x player.y) (V2 player.spriteInformation.width player.spriteInformation.height)
+drawSpriteInfo :: SDL.Renderer -> Map Sprite SDL.Texture -> SpriteInformation -> Double -> Double -> IO ()
+drawSpriteInfo renderer sprites info x y =
+	drawSprite renderer texture info.action info.index (V2 x y) (V2 info.width info.height)
 	where
-		playerSprite :: SDL.Texture
-		playerSprite = sprites ! player.spriteInformation.sprite
+		texture :: SDL.Texture
+		texture = sprites ! info.sprite
 
 drawSprite :: SDL.Renderer -> SDL.Texture -> SpriteAction -> Int-> V2 Double -> V2 Int -> IO ()
 drawSprite renderer texture action index position size@(V2 width height) = SDL.copy renderer texture sourceRectangle targetRectangle
