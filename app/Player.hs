@@ -57,9 +57,6 @@ initialPlayer = Player
 groundPosition :: Double
 groundPosition = 150
 
-inAir :: Player -> Bool
-inAir player = player.position.y < groundPosition
-
 updatePlayer :: PressedKeys -> (Player -> Player)
 updatePlayer k = updateSprite . handleGrounded . applyFriction . setPosition . applyAcceleration . applyGravity . handleJump
 	where 
@@ -103,11 +100,11 @@ updatePlayer k = updateSprite . handleGrounded . applyFriction . setPosition . a
 			}
 		handleGrounded :: Player -> Player
 		handleGrounded player
-			| inAir player = player { groundState = Airborne }
+			| player.position.y < groundPosition = player { groundState = Airborne }
 			| otherwise = player { groundState = Grounded, verticalVelocity = 0 }
 
 updateSprite :: Player -> Player
-updateSprite player = player { spriteInformation = setSpriteIndex . (setSpriteAction player) . setPreviousSprite $ player.spriteInformation }
+updateSprite player = player { spriteInformation = (setSpriteAction player) . setPreviousSpriteAction $ player.spriteInformation }
 
 setSpriteAction :: Player -> SpriteInformation -> SpriteInformation
 setSpriteAction player spriteInformation = spriteInformation { action = getSpriteAction player }

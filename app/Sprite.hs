@@ -32,8 +32,8 @@ frameCount PlayerSprite SpriteActionWalkRight = 4
 frameCount BrickSprite SpriteActionIdle = 4
 frameCount _ _ = 1
 
-setPreviousSprite :: SpriteInformation -> SpriteInformation
-setPreviousSprite info = info { previousAction = info.action }
+setPreviousSpriteAction :: SpriteInformation -> SpriteInformation
+setPreviousSpriteAction info = info { previousAction = info.action }
 
 setSpriteIndex :: SpriteInformation -> SpriteInformation
 setSpriteIndex info
