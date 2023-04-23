@@ -16,7 +16,7 @@ import Player
 import Event
 import Vector
 
-withSdl :: (IO [Event] -> IO Double -> (Player -> IO ()) -> IO ()) -> IO ()
+withSdl :: (IO [Event] -> IO Double -> ([(Vec2 Int, SpriteInformation)] -> IO ()) -> IO ()) -> IO ()
 withSdl eventNetwork = bracket_
 	(SDL.initialize [SDL.InitVideo] *> SDL.Image.initialize [SDL.Image.InitPNG])
 	(SDL.Image.quit *> SDL.quit)
@@ -32,12 +32,12 @@ withSprites f renderer = bracket
 		loadSprites = do
 			playerTexture <- SDL.Image.loadTexture renderer "app/images/player_sprite.png"
 			brickTexture <- SDL.Image.loadTexture renderer "app/images/brick_sprite.png"
-			pure $ fromList [(PlayerSprite, playerTexture)]
+			pure $ fromList [(PlayerSprite, playerTexture), (BrickSprite, brickTexture)]
 
-draw :: SDL.Renderer -> Map Sprite SDL.Texture -> Player -> IO ()
-draw renderer sprites player = do
+draw :: SDL.Renderer -> Map Sprite SDL.Texture -> [(Vec2 Int, SpriteInformation)] -> IO ()
+draw renderer textures sprites = do
 	clear renderer
-	drawSpriteInfo renderer sprites player.spriteInformation player.position.x player.position.y
+	drawSpriteInfo renderer textures `mapM_` sprites --player.spriteInformation player.position.x player.position.y
 	SDL.present renderer
 
 clear :: SDL.Renderer -> IO ()
@@ -45,20 +45,20 @@ clear renderer = do
 	SDL.rendererDrawColor renderer $= V4 0 0 0 255
 	SDL.clear renderer
 
-drawSpriteInfo :: SDL.Renderer -> Map Sprite SDL.Texture -> SpriteInformation -> Double -> Double -> IO ()
-drawSpriteInfo renderer sprites info x y =
-	drawSprite renderer texture info.action info.index (V2 x y) (V2 info.width info.height)
+drawSpriteInfo :: SDL.Renderer -> Map Sprite SDL.Texture -> (Vec2 Int, SpriteInformation) -> IO ()
+drawSpriteInfo renderer textures (position, info) =
+	drawSprite renderer texture info.action info.index (V2 position.x position.y) (V2 info.width info.height)
 	where
 		texture :: SDL.Texture
-		texture = sprites ! info.sprite
+		texture = textures ! info.sprite
 
-drawSprite :: SDL.Renderer -> SDL.Texture -> SpriteAction -> Int-> V2 Double -> V2 Int -> IO ()
+drawSprite :: SDL.Renderer -> SDL.Texture -> SpriteAction -> Int-> V2 Int -> V2 Int -> IO ()
 drawSprite renderer texture action index position size@(V2 width height) = SDL.copy renderer texture sourceRectangle targetRectangle
 	where
 		sourceRectangle :: Integral n => Maybe (SDL.Rectangle n)
 		sourceRectangle = toRectangle (V2 (index * width) (fromEnum action * height)) (V2 width height)
 		targetRectangle :: Integral n => Maybe (SDL.Rectangle n)
-		targetRectangle = toRectangle (round <$> position) size
+		targetRectangle = toRectangle position size
 
 
 drawRectangle :: SDL.Renderer -> V2 Int -> V2 Int -> IO ()

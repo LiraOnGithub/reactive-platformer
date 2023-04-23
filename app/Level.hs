@@ -4,6 +4,7 @@ import Brick
 import Player
 import Sprite
 import Vector
+import Event
 
 data Level = Level 
 	{ bricks :: [Brick]
@@ -18,3 +19,6 @@ initialLevel = Level
 
 spritesToDraw :: Level -> [(Vec2 Int, SpriteInformation)]
 spritesToDraw level = (getSpriteToDraw <$> level.bricks) <> [(getSpriteToDraw level.player)]
+
+updateLevel :: PressedKeys -> (Level -> Level)
+updateLevel pressedKeys level = level { player = updatePlayer pressedKeys level.player }

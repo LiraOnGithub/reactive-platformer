@@ -7,6 +7,9 @@ import qualified Reactive.Banana.Frameworks as F
 
 import Player
 import Event
+import Sprite
+import Vector
+import Level
 
 fps, delta, maxFps, maxDelta :: Double
 fps = 30
@@ -14,11 +17,11 @@ delta = 1000 / fps
 maxFps = 60
 maxDelta = 1000 / maxFps
 
-run :: IO [Event] -> IO Double -> (Player -> IO ()) -> IO ()
-run getEvents ticks drawPlayer = do
+run :: IO [Event] -> IO Double -> ([(Vec2 Int, SpriteInformation)] -> IO ()) -> IO ()
+run getEvents ticks drawSprites = do
 	(eventHandler, fireEvent) <- F.newAddHandler
 
-	network <- B.compile $ description eventHandler ticks drawPlayer
+	network <- B.compile $ description eventHandler ticks drawSprites
 	F.actuate network
 
 	handleEvents fireEvent 0 []
@@ -44,14 +47,16 @@ run getEvents ticks drawPlayer = do
 preventCpu100 :: IO ()
 preventCpu100 = threadDelay (round maxDelta * 1000)
 
-description :: F.AddHandler Event -> IO Double -> (Player -> IO ()) -> F.MomentIO ()
-description eventHandler ticks drawPlayer = do
+description :: F.AddHandler Event -> IO Double -> ([(Vec2 Int, SpriteInformation)] -> IO ()) -> F.MomentIO ()
+description eventHandler ticks drawSprites = do
 	events <- F.fromAddHandler eventHandler
 	pressedKeysE <- B.accumE initialPressedKeys (updatePressedKeys <$> events)
 	let
 		tickE = B.filterE onlyTicks pressedKeysE
-	playerE <- B.accumE initialPlayer (updatePlayer <$> tickE)
-	F.reactimate $ drawPlayer <$> playerE
+	levelE <- B.accumE initialLevel (updateLevel <$> tickE)
+	--playerE <- B.accumE initialPlayer (updatePlayer <$> tickE)
+	--F.reactimate $ drawPlayer <$> playerE
+	F.reactimate $ drawSprites <$> spritesToDraw <$> levelE
 	where
 		onlyTicks :: PressedKeys -> Bool
 		onlyTicks pk = pk.executeTick
