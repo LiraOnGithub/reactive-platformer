@@ -41,10 +41,13 @@ setPreviousSpriteAction info = info { previousAction = info.action }
 
 setSpriteIndex :: SpriteInformation -> SpriteInformation
 setSpriteIndex info
-	| info.previousAction /= info.action = info { index = 0, counter = spriteSpeed }
+	| info.previousAction /= info.action = info { counter = spriteSpeed, index = 0 }
 	| info.counter > 0 = info { counter = info.counter - 1 }
-	| info.repeats = info { counter = spriteSpeed, index = (info.index + 1) `mod` frameCount info.sprite info.action } 
-	| otherwise = info { counter = spriteSpeed, index = min (info.index + 1) (frameCount info.sprite info.action - 1) }
+	| info.repeats = info { counter = spriteSpeed, index = (info.index + 1) `mod` frameCount' }
+	| otherwise = info { counter = spriteSpeed, index = min (info.index + 1) (frameCount' - 1) }
+	where
+		frameCount' :: Int
+		frameCount' = frameCount info.sprite info.action
 
 class HasSprite a where
 	getSpriteToDraw :: a -> (Vec2 Int, SpriteInformation)
