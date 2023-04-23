@@ -50,7 +50,8 @@ initialPlayer = Player
 		, index = 0
 		, width = 20
 		, height = 20
-		, repeats = False
+		, repeats = True
+		, counter = 0
 		}
 	}
 

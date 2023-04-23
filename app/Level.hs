@@ -13,7 +13,7 @@ data Level = Level
 
 initialLevel :: Level
 initialLevel = Level
-	{ bricks = [Brick.placeBrick 50 50, Brick.placeBrick 50 70]
+	{ bricks = [placeBrick 2 5, placeBrick 1 5, placeBrick 0 5]
 	, player = Player.initialPlayer
 	}
 
@@ -28,3 +28,18 @@ updateLevel pressedKeys level = level
 	where
 		updatedPlayer :: Player.Player
 		updatedPlayer = Player.updatePlayer pressedKeys level.player
+
+placeBrick :: Int -> Int -> Brick.Brick
+placeBrick x y = Brick.Brick
+	{ position = Vec2 (x * 20) (y * 20)
+	, spriteInformation = SpriteInformation
+		{ sprite = BrickSprite
+		, previousAction = SpriteActionIdle
+		, action = SpriteActionIdle
+		, index = 0
+		, width = 20
+		, height = 20
+		, repeats = True
+		, counter = 0
+		}
+	}
