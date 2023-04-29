@@ -2,7 +2,6 @@ module LevelGrid where
 
 import Data.Matrix (Matrix, matrix, toList, setElem, (!))
 import Data.Maybe (mapMaybe)
-import GHC.Records (HasField)
 
 import Vector
 import Constants
@@ -14,8 +13,11 @@ instance Functor LevelGrid where
 	fmap f (LevelGrid matrix) = LevelGrid ((fmap . fmap) f matrix)
 
 createLevelGrid :: Int -> Int -> [Brick] -> LevelGrid Brick
-createLevelGrid width height xs = LevelGrid $ foldr (\i matrix -> setElem (Just i) (coordinateOnGrid i.position) matrix) emptyMatrix xs
+createLevelGrid width height xs = LevelGrid $ foldr setElem' emptyMatrix xs
 	where
+		setElem' :: Brick -> Matrix (Maybe Brick) -> Matrix (Maybe Brick)
+		setElem' block = setElem (Just block) (coordinateOnGrid block.position)
+		emptyMatrix :: Matrix (Maybe Brick)
 		emptyMatrix = matrix width height (const Nothing)
 
 data SurroundingElements a = SurroundingElements

@@ -5,7 +5,6 @@ import Control.Concurrent
 import qualified Reactive.Banana as B
 import qualified Reactive.Banana.Frameworks as F
 
-import Player
 import Event
 import Sprite
 import Vector
@@ -52,14 +51,9 @@ description eventHandler ticks drawSprites = do
 	events <- F.fromAddHandler eventHandler
 	pressedKeysE <- B.accumE initialPressedKeys (updatePressedKeys <$> events)
 	let
-		tickE = B.filterE onlyTicks pressedKeysE
+		tickE = B.filterE (.executeTick) pressedKeysE
 	levelE <- B.accumE initialLevel (updateLevel <$> tickE)
-	--playerE <- B.accumE initialPlayer (updatePlayer <$> tickE)
-	--F.reactimate $ drawPlayer <$> playerE
 	F.reactimate $ drawSprites <$> spritesToDraw <$> levelE
-	where
-		onlyTicks :: PressedKeys -> Bool
-		onlyTicks pk = pk.executeTick
 
 updatePressedKeys :: Event -> (PressedKeys -> PressedKeys)
 updatePressedKeys (ArrowUpEvent b) k = k { up = b, executeTick = False }

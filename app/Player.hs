@@ -56,7 +56,7 @@ initialPlayer = Player
 	}
 
 groundPosition :: Double
-groundPosition = 150
+groundPosition = 250
 
 updatePlayer :: PressedKeys -> (Player -> Player)
 updatePlayer k = updateSprite . handleGrounded . applyFriction . setPosition . applyAcceleration . applyGravity . handleJump

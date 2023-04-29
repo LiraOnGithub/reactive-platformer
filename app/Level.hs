@@ -15,7 +15,7 @@ data Level = Level
 initialLevel :: Level
 initialLevel = Level
 	{ player = Player.initialPlayer
-	, bricks = createLevelGrid 10 10 [placeBrick 20 20, placeBrick 40 40, placeBrick 0 0]
+	, bricks = createLevelGrid 10 20 [placeBrick 0 180, placeBrick 20 180, placeBrick 40 180]
 	}
 
 spritesToDraw :: Level -> [(Vec2 Int, SpriteInformation)]
