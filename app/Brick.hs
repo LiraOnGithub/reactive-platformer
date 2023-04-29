@@ -4,12 +4,12 @@ import Sprite
 import Vector
 
 data Brick = Brick
-	{ position :: Vec2 Int
+	{ position :: Vec2 Double
 
 	, spriteInformation :: SpriteInformation
 	}
 	deriving Show
 
 instance HasSprite Brick where
-	getSpriteToDraw brick = (brick.position, brick.spriteInformation)
+	getSpriteToDraw brick = (round <$> brick.position, brick.spriteInformation)
 

@@ -37,7 +37,7 @@ withSprites f renderer = bracket
 draw :: SDL.Renderer -> Map Sprite SDL.Texture -> [(Vec2 Int, SpriteInformation)] -> IO ()
 draw renderer textures sprites = do
 	clear renderer
-	drawSpriteInfo renderer textures `mapM_` sprites --player.spriteInformation player.position.x player.position.y
+	drawSpriteInfo renderer textures `mapM_` sprites
 	SDL.present renderer
 
 clear :: SDL.Renderer -> IO ()

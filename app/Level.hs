@@ -5,23 +5,24 @@ import qualified Player
 import Sprite
 import Vector
 import Event
+import LevelGrid
 
 data Level = Level 
-	{ bricks :: [Brick.Brick]
+	{ bricks :: LevelGrid Brick.Brick
 	, player :: Player.Player
 	}
 
 initialLevel :: Level
 initialLevel = Level
-	{ bricks = [placeBrick 2 5, placeBrick 1 5, placeBrick 0 5]
-	, player = Player.initialPlayer
+	{ player = Player.initialPlayer
+	, bricks = createLevelGrid 10 10 [placeBrick 20 20, placeBrick 40 40, placeBrick 0 0]
 	}
 
 spritesToDraw :: Level -> [(Vec2 Int, SpriteInformation)]
-spritesToDraw level = (getSpriteToDraw <$> level.bricks) <> [(getSpriteToDraw level.player)]
+spritesToDraw level = (getSpriteToDraw <$> (getElements level.bricks)) <> [(getSpriteToDraw level.player)]
 
 updateLevel :: PressedKeys -> (Level -> Level)
-updateLevel pressedKeys level = level 
+updateLevel pressedKeys level = level
 	{ player = updatedPlayer { Player.spriteInformation = setSpriteIndex updatedPlayer.spriteInformation }
 	, bricks = (\b -> b { Brick.spriteInformation = setSpriteIndex b.spriteInformation }) <$> level.bricks
 	}
@@ -29,9 +30,9 @@ updateLevel pressedKeys level = level
 		updatedPlayer :: Player.Player
 		updatedPlayer = Player.updatePlayer pressedKeys level.player
 
-placeBrick :: Int -> Int -> Brick.Brick
+placeBrick :: Double -> Double -> Brick.Brick
 placeBrick x y = Brick.Brick
-	{ position = Vec2 (x * 20) (y * 20)
+	{ position = Vec2 x y
 	, spriteInformation = SpriteInformation
 		{ sprite = BrickSprite
 		, previousAction = SpriteActionIdle
