@@ -3,7 +3,6 @@ module Player where
 import Data.Bool (bool)
 import Data.Ord (clamp)
 
-import qualified Brick
 import Event
 import Sprite
 import Vector
@@ -73,17 +72,17 @@ updatePlayer k = updateSprite . handleGrounded . applyFriction . setPosition . a
 		handleJump :: Player -> Player
 		handleJump player
 			| player.groundState == Grounded && k.up = player
-				{ velocity = Vec2 player.velocity.x (-player.jumpPower)
+				{ velocity = player.velocity { y = -player.jumpPower }
 				, groundState = Airborne
 				}
 			| otherwise = player
 		applyGravity :: Player -> Player
-		applyGravity player = player 
-			{ velocity = Vec2 player.velocity.x (player.velocity.y + player.gravity * k.deltaLastTick)
+		applyGravity player = player
+			{ velocity = player.velocity { y = player.velocity.y + player.gravity * k.deltaLastTick }
 			}
 		applyAcceleration :: Player -> Player
 		applyAcceleration player = player
-			{ velocity = Vec2 (clamp (-player.speed, player.speed) $ player.velocity.x - accelerationLeft + accelerationRight) player.velocity.y
+			{ velocity = player.velocity { x = clamp (-player.speed, player.speed) $ player.velocity.x - accelerationLeft + accelerationRight }
 			}
 			where
 				accelerationLeft :: Double
@@ -94,12 +93,12 @@ updatePlayer k = updateSprite . handleGrounded . applyFriction . setPosition . a
 				getAccelerationInDirection = bool 0 player.acceleration
 		applyFriction :: Player -> Player
 		applyFriction player = player
-			{ velocity = Vec2 (player.velocity.x / player.friction) player.velocity.y
+			{ velocity = player.velocity { x = player.velocity.x / player.friction }
 			}
 		handleGrounded :: Player -> Player
 		handleGrounded player
 			| player.position.y < groundPosition = player { groundState = Airborne }
-			| otherwise = player { groundState = Grounded, velocity = Vec2 (player.velocity.x) 0 }
+			| otherwise = player { groundState = Grounded, velocity = player.velocity { y = 0 } }
 
 updateSprite :: Player -> Player
 updateSprite player = player { spriteInformation = (setSpriteAction player) . setPreviousSpriteAction $ player.spriteInformation }
