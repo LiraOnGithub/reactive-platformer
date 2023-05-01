@@ -3,9 +3,12 @@ module Player where
 import Data.Bool (bool)
 import Data.Ord (clamp)
 
+import qualified Brick
 import Event
 import Sprite
 import Vector
+import Common.HasDefault
+import Collision.SurroundingElements
 
 data GroundState
 	= Airborne
@@ -16,44 +19,38 @@ data Player = Player
 	{ position :: Vec2 Double
 	, acceleration :: Double
 	, friction :: Double
-	, horizontalVelocity :: Double
+	, velocity :: Vec2 Double
 	, speed :: Double
-
-	, verticalVelocity :: Double
 	, jumpPower :: Double
 	, gravity :: Double
 	, groundState :: GroundState
-
 	, spriteInformation :: SpriteInformation
 	} deriving Show
 
 instance HasSprite Player where
 	getSpriteToDraw player = (round <$> player.position, player.spriteInformation)
 
-initialPlayer :: Player
-initialPlayer = Player
-	{ position = Vec2 20 20
-	, acceleration = 1
-	, friction = 2
-	, horizontalVelocity = 0
-	, speed = 4
-
-	, verticalVelocity = 0
-	, jumpPower = 12
-	, gravity = 1
-	, groundState = Airborne
-
-	, spriteInformation = SpriteInformation
-		{ sprite = PlayerSprite
-		, previousAction = SpriteActionIdle
-		, action = SpriteActionIdle
-		, index = 0
-		, width = 20
-		, height = 20
-		, repeats = True
-		, counter = 0
+instance HasDefault Player where
+	getDefault = Player
+		{ position = Vec2 20 20
+		, acceleration = 1
+		, friction = 2
+		, velocity = Vec2 0 0
+		, speed = 4
+		, jumpPower = 12
+		, gravity = 1
+		, groundState = Airborne
+		, spriteInformation = SpriteInformation
+			{ sprite = PlayerSprite
+			, previousAction = SpriteActionIdle
+			, action = SpriteActionIdle
+			, index = 0
+			, width = 20
+			, height = 20
+			, repeats = True
+			, counter = 0
+			}
 		}
-	}
 
 groundPosition :: Double
 groundPosition = 250
@@ -63,8 +60,8 @@ updatePlayer k = updateSprite . handleGrounded . applyFriction . setPosition . a
 	where 
 		setPosition :: Player -> Player
 		setPosition player = player { position = Vec2
-			{ x = player.position.x + player.horizontalVelocity * k.deltaLastTick
-			, y = min groundPosition (player.position.y + player.verticalVelocity * k.deltaLastTick)
+			{ x = player.position.x + player.velocity.x * k.deltaLastTick
+			, y = min groundPosition (player.position.y + player.velocity.y * k.deltaLastTick)
 			} }
 			where
 				changeLeft :: Double
@@ -76,17 +73,17 @@ updatePlayer k = updateSprite . handleGrounded . applyFriction . setPosition . a
 		handleJump :: Player -> Player
 		handleJump player
 			| player.groundState == Grounded && k.up = player
-				{ verticalVelocity = -player.jumpPower
+				{ velocity = Vec2 player.velocity.x (-player.jumpPower)
 				, groundState = Airborne
 				}
 			| otherwise = player
 		applyGravity :: Player -> Player
 		applyGravity player = player 
-			{ verticalVelocity = player.verticalVelocity + player.gravity * k.deltaLastTick
+			{ velocity = Vec2 player.velocity.x (player.velocity.y + player.gravity * k.deltaLastTick)
 			}
 		applyAcceleration :: Player -> Player
 		applyAcceleration player = player
-			{ horizontalVelocity = clamp (-player.speed, player.speed) $ player.horizontalVelocity - accelerationLeft + accelerationRight
+			{ velocity = Vec2 (clamp (-player.speed, player.speed) $ player.velocity.x - accelerationLeft + accelerationRight) player.velocity.y
 			}
 			where
 				accelerationLeft :: Double
@@ -97,12 +94,12 @@ updatePlayer k = updateSprite . handleGrounded . applyFriction . setPosition . a
 				getAccelerationInDirection = bool 0 player.acceleration
 		applyFriction :: Player -> Player
 		applyFriction player = player
-			{ horizontalVelocity = player.horizontalVelocity / player.friction
+			{ velocity = Vec2 (player.velocity.x / player.friction) player.velocity.y
 			}
 		handleGrounded :: Player -> Player
 		handleGrounded player
 			| player.position.y < groundPosition = player { groundState = Airborne }
-			| otherwise = player { groundState = Grounded, verticalVelocity = 0 }
+			| otherwise = player { groundState = Grounded, velocity = Vec2 (player.velocity.x) 0 }
 
 updateSprite :: Player -> Player
 updateSprite player = player { spriteInformation = (setSpriteAction player) . setPreviousSpriteAction $ player.spriteInformation }
@@ -112,8 +109,8 @@ setSpriteAction player spriteInformation = spriteInformation { action = getSprit
 
 getSpriteAction :: Player -> SpriteAction
 getSpriteAction player
-	| player.groundState == Airborne && player.verticalVelocity < 0 = SpriteActionJump
-	| player.groundState == Airborne && player.verticalVelocity > 0 = SpriteActionFall
-	| player.horizontalVelocity > 0.4 = SpriteActionWalkRight
-	| player.horizontalVelocity < -0.4 = SpriteActionWalkLeft
+	| player.groundState == Airborne && player.velocity.y < 0 = SpriteActionJump
+	| player.groundState == Airborne && player.velocity.y > 0 = SpriteActionFall
+	| player.velocity.x > 0.4 = SpriteActionWalkRight
+	| player.velocity.x < -0.4 = SpriteActionWalkLeft
 	| otherwise = SpriteActionIdle
