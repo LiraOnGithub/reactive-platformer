@@ -27,7 +27,7 @@ data Player = Player
 	} deriving Show
 
 instance HasSprite Player where
-	getSpriteToDraw player = (round <$> player.position, player.spriteInformation)
+	getSpritePosition player = round <$> player.position
 
 instance HasDefault Player where
 	getDefault = Player

@@ -1,6 +1,8 @@
+{-# LANGUAGE DataKinds, FlexibleContexts  #-}
 module Sprite where
 
 import Vector
+import GHC.Records (HasField)
 
 data Sprite
 	= PlayerSprite
@@ -49,5 +51,7 @@ setSpriteIndex info
 		frameCount' :: Int
 		frameCount' = frameCount info.sprite info.action
 
-class HasSprite a where
+class HasField "spriteInformation" a SpriteInformation => HasSprite a where
+	getSpritePosition :: a -> Vec2 Int
 	getSpriteToDraw :: a -> (Vec2 Int, SpriteInformation)
+	getSpriteToDraw a = (getSpritePosition a, a.spriteInformation)

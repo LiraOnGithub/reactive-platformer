@@ -11,7 +11,7 @@ data Brick = Brick
 	} deriving Show
 
 instance HasSprite Brick where
-	getSpriteToDraw brick = (round <$> brick.position, brick.spriteInformation)
+	getSpritePosition brick = round <$> brick.position
 
 instance HasDefault Brick where
 	getDefault = Brick
