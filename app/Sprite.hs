@@ -51,7 +51,8 @@ setSpriteIndex info
 		frameCount' :: Int
 		frameCount' = frameCount info.sprite info.action
 
-class HasField "spriteInformation" a SpriteInformation => HasSprite a where
+class (HasField "spriteInformation" a SpriteInformation) => HasSprite a where
 	getSpritePosition :: a -> Vec2 Int
 	getSpriteToDraw :: a -> (Vec2 Int, SpriteInformation)
 	getSpriteToDraw a = (getSpritePosition a, a.spriteInformation)
+	setSprite :: SpriteInformation -> a -> a

@@ -1,4 +1,4 @@
-module Brick where
+module Brick (brick, Brick(position, spriteInformation)) where
 
 import Sprite
 import Vector
@@ -12,6 +12,7 @@ data Brick = Brick
 
 instance HasSprite Brick where
 	getSpritePosition brick = round <$> brick.position
+	setSprite spriteInformation brick = brick { spriteInformation = spriteInformation }
 
 instance HasDefault Brick where
 	getDefault = Brick
@@ -27,3 +28,7 @@ instance HasDefault Brick where
 			, counter = 0
 			}
 		}
+
+brick :: Vec2 Double -> Brick
+brick v = getDefault { position = v }
+

@@ -3,11 +3,14 @@ module Player where
 import Data.Bool (bool)
 import Data.Ord (clamp)
 
+import Brick (Brick)
 import Event
 import Sprite
 import Vector
 import Common.HasDefault
+import Constants
 import Collision.SurroundingElements
+import Collision.LevelGrid
 
 data GroundState
 	= Airborne
@@ -28,6 +31,7 @@ data Player = Player
 
 instance HasSprite Player where
 	getSpritePosition player = round <$> player.position
+	setSprite spriteInformation player = player { spriteInformation = spriteInformation }
 
 instance HasDefault Player where
 	getDefault = Player
@@ -113,3 +117,36 @@ getSpriteAction player
 	| player.velocity.x > 0.4 = SpriteActionWalkRight
 	| player.velocity.x < -0.4 = SpriteActionWalkLeft
 	| otherwise = SpriteActionIdle
+
+handleCollisions :: LevelGrid Brick -> Player -> Player
+handleCollisions bricks player
+	 | abs player.velocity.y > abs player.velocity.x
+		= (handleCollisionHorizontal bricks) . (handleCollisionVertical bricks) $ player
+	 | otherwise = (handleCollisionVertical bricks)  . (handleCollisionHorizontal bricks) $ player
+
+se :: LevelGrid Brick -> Player -> SurroundingElements Brick.Brick
+se bricks player = getSurroundingElements bricks player.position
+
+handleCollisionHorizontal :: LevelGrid Brick -> Player -> Player
+handleCollisionHorizontal bricks player
+	 | mustMoveLeft player.velocity (se bricks player) = player
+		{ position = player.position { x = (roundToGrid player.position).x }
+		, velocity = player.velocity { x = 0 }
+		}
+	 | mustMoveRight player.velocity (se bricks player) = player
+		{ position = player.position { x = (roundToGrid player.position).x + gridSize }
+		, velocity = player.velocity { x = 0 }
+		}
+	| otherwise = player
+handleCollisionVertical :: LevelGrid Brick -> Player -> Player
+handleCollisionVertical bricks player
+	| mustMoveUp player.velocity (se bricks player) = player
+		{ position = player.position { y = (roundToGrid player.position).y }
+		, velocity = player.velocity { y = 0 }
+		, groundState = Grounded
+		}
+	| mustMoveDown player.velocity (se bricks player) = player
+		{ position = player.position { y = (roundToGrid player.position).y + gridSize }
+		, velocity = player.velocity { y = 0 }
+		}
+	| otherwise = player
